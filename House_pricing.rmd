@@ -1,0 +1,71 @@
+---
+title: "Housepricing"
+author: "Akhil Gaur"
+date: "8 February 2017"
+output: html_document
+
+---
+https://www.hackerrank.com/akhilgaur9
+
+Question:
+
+Charlie wants to buy a house. He does a detailed survey of the area where he wants to live, in which he quantifies, normalizes, and maps the desirable features of houses to values on a scale of  to  so the data can be assembled into a table. If Charlie noted  features, each row contains  space-separated values followed by the house price in dollars per square foot (making for a total of  columns). If Charlie makes observations about  houses, his observation table has  rows. This means that the table has a total of  entries.
+
+Unfortunately, he was only able to get the price per square foot for certain houses and thus needs your help estimating the prices of the rest! Given the feature and pricing data for a set of houses, help Charlie estimate the price per square foot of the houses for which he has compiled feature data but no pricing.
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(lattice)
+
+```
+
+## Reading the file train data.
+
+```{r}
+hprice <- read.table("~/Hpricetrain.txt", quote="\"", comment.char="")
+hprice
+
+```
+
+## Linear model created and Summary of fitted model
+
+```{r, echo=TRUE}
+f=length(colnames(hprice))-1
+priceModel.lm<-  lm(  as.formula(paste(colnames((hprice))[f+1], "~",
+                                   paste(colnames(hprice)[c(1:f)], collapse = "+"),
+                                   sep = "")),data=hprice)
+                   
+priceModel.lm <- lm(V3~.,na.action = na.omit, data = hprice)
+fitted(priceModel.lm)
+summary(priceModel.lm)
+priceModel.lm$residuals
+
+```
+
+## Plotting the parameter of model
+
+```{r, echo=TRUE}
+layout(matrix(c(1,2,3,4),2,2))
+plot(priceModel.lm)
+```
+
+## reading the test file and predicting the value against expected output
+
+```{r}
+testData <- read.table("~/Hpricetest.txt", quote="\"", comment.char="")
+predictPrice <- predict(priceModel.lm,testData) 
+predictPrice
+outputdata <- c(105.22, 142.68,132.94,129.71)
+predictPrice1 <- testData
+predictPrice1$V3 <- predictPrice
+predictPrice1$expectedoutput<-outputdata
+
+predictPrice1
+
+```
+
+
+
+
+
