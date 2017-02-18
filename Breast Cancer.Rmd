@@ -1,0 +1,111 @@
+---
+title: "ML Assignment 3"
+author: "Akhil Gaur"
+date: "18 February 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(party)
+library(caret)
+library(datasets)
+library(randomForest)
+library(mlbench)
+library(rpart)
+library(gmodels)
+library(class)
+library(e1071)
+library(VIM)
+library(mice)
+data("BreastCancer")
+breastCancer <- na.omit(BreastCancer)
+breastCancer <- breastCancer[,-1]
+
+```
+
+## Checking For Missing Data
+
+
+```{r}
+md.pattern(breastCancer)
+aggr_plot <- aggr(breastCancer, col=c('navyblue','red'), numbers=TRUE, sortVars=TRUE, labels=names(breastCancer), cex.axis=.7, gap=3, ylab=c("Histogram of missing data","Pattern"))
+splitdata <- createDataPartition(y=breastCancer$Class,p=0.8, list = F,times = 1)
+train_data <- breastCancer[splitdata,]
+test_data <- breastCancer[-splitdata,]
+
+```
+
+## Classification using rpart
+
+```{r}
+fitrpart <- rpart(Class ~ .,method="class",data=train_data)
+printcp(fitrpart)
+plotcp(fitrpart)
+#summary(fitrpart)
+testrpart<- test_data
+testrpart$fitvalues <- predict(fitrpart,testrpart,type = "class")
+testtable <- table(testrpart$fitvalues,testrpart$Class)
+accuracyrpart <- sum(diag(testtable))/sum(testtable)
+accuracyrpart
+
+```
+## KNN method
+
+```{r}
+train_labels <- breastCancer[splitdata,10]
+test_labels <- breastCancer[-splitdata,10]
+fitknn.4 <- knn(train = train_data[,-10],test = test_data[,-10],k=4,cl =train_labels)
+CrossTable(test_data[,10],fitknn.4,prop.chisq = F)
+testtableknn<-table(test_labels,fitknn.4)
+accuracyknn <- sum(diag(testtableknn))/sum(testtableknn)
+accuracyknn
+```
+## ctree method
+
+```{r}
+fitctree <- ctree(Class~.,data = train_data,controls = ctree_control(maxdepth = 4))
+plot(fitctree)
+ctreetestdata <- test_data
+ctreetestdata$fitvalues <- predict(fitctree,test_data)
+testtable <- table(ctreetestdata$fitvalues,ctreetestdata$Class)
+accuracyctree <- sum(diag(testtable))/sum(testtable)
+accuracyctree
+
+```
+## naive bayes
+
+```{r}
+fitnb <- naiveBayes(Class~.,data = train_data)
+nbtestdata <- test_data
+nbtestdata$fitvalues <- predict(fitnb,nbtestdata)
+testtable <- table(nbtestdata$fitvalues,nbtestdata$Class)
+accuracynb <- sum(diag(testtable))/sum(testtable)
+accuracynb
+
+```
+## Random Forest
+
+```{r}
+fitrandomForest <- randomForest(Class~.,data = train_data, ntree = 400)
+print(fitrandomForest)
+rftestdata <- test_data
+rftestdata$fitvalues <- predict(fitrandomForest,rftestdata)
+testtable <- table(rftestdata$fitvalues,rftestdata$Class)
+accuracyrf <- sum(diag(testtable))/sum(testtable)
+accuracyrf
+
+
+```
+## Logistic Regression
+
+```{r,warning=FALSE}
+train_data$Class <- factor(train_data$Class)
+fitlog <- glm(Class ~ .,data = train_data,family = "binomial")
+summary(fitlog)
+predictlog <- predict(fitlog,type = "response",test_data)
+testtable <- table(round(predictlog),test_data$Class)
+accuracylr <- sum(diag(testtable))/sum(testtable)
+accuracylr
+
+```
