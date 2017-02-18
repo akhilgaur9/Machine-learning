@@ -1,0 +1,90 @@
+---
+Title: "Laptop Battery Life"
+Author: "Akhil Gaur"
+output: html_document
+fig_caption: no
+keep_md: yes
+toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+##Reading the source file
+
+```{r, echo=TRUE}
+laptopBattery <- read.table("laptopBattery.txt", sep = ",",header = F)
+head(laptopBattery)
+```
+
+
+##setting the names of column
+
+```{r, echo=TRUE}
+library(data.table)
+setnames(laptopBattery,old = c('V1','V2'),new = c('charge_time','last_life'))
+```
+
+
+##checking for missing value
+
+```{r, echo=TRUE}
+ library(VIM)
+ imputation_plot <- aggr(laptopBattery,col = c("blue","red"),
+                             numbers = TRUE,sortVars = TRUE,
+                             labels = names(laptopBattery),gap = 3,
+                             ylab = c("Missing Data","Pattern"))
+```                             
+
+
+##Scatter plot to see the data
+
+```{r, echo=TRUE}
+ plot(last_life~charge_time,data = laptopBattery)
+```
+
+
+##From the graph(scatter plot) we can se the maximum battery life 
+ is 8 hours when we charge for 4 hrs and above,
+so we are taking values only upto 4 hrs of charging.
+
+
+```{r,echo=TRUE}
+laptopBattery1<- subset(laptopBattery,subset=charge_time<= 4)
+laptopBattery.lm <- lm(last_life~charge_time,data = laptopBattery1)
+fitted(laptopBattery.lm)
+```
+##Summary of the Model
+
+```{r,echo=TRUE, echo=TRUE}
+summary(laptopBattery.lm)
+```
+
+
+##Plotting the parameter of model
+
+```{r,echo=TRUE}
+layout(matrix(c(1,2,3,4),2,2))
+plot(laptopBattery.lm)
+```
+
+
+##plotting the model 
+
+```{r,echo=TRUE}
+layout(1)
+plot(laptopBattery1$charge_time,laptopBattery1$last_life)
+abline(laptopBattery.lm)
+```
+
+
+
+##Printing the value of model for given input
+
+```{r,echo=TRUE}
+input_time <-  data.frame("charge_time" = 1.5)
+output_time <- ifelse(input_time<=4,predict(laptopBattery.lm,input_time),8)
+print(output_time)
+```
